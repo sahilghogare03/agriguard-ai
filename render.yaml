@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: agriguard-ai
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: SUPABASE_URL
+        value: https://dzvnmhcmftodaaviteon.supabase.co
+      - key: SUPABASE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6dm5taGNtZnRvZGFhdml0ZW9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQ5MjQsImV4cCI6MjEwMDUzMDkyNH0.zAXLWfjBnBuvkr6OLgU58UPfbKL_6sgVfspbV_N0UfA
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: 10000
