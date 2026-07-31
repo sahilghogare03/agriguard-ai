@@ -1,10 +1,6 @@
 import os
 import numpy as np
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.layers import Dense
 from werkzeug.utils import secure_filename
 
 from disease_info import disease_info
@@ -32,22 +28,6 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-
-class FixedDense(Dense):
-    def __init__(self, *args, quantization_config=None, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-print("Loading model...")
-
-try:
-    model = load_model("plant_disease_model.keras", custom_objects={"Dense": FixedDense})
-except Exception:
-    model = load_model("plant_disease_model.keras")
-
-print("Model Loaded Successfully!")
-
 
 with open("labels.txt", "r") as f:
     class_names = [line.strip() for line in f.readlines()]

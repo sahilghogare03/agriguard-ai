@@ -3,21 +3,30 @@
 import os
 import numpy as np
 from PIL import Image
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.utils import load_img, img_to_array
-from tensorflow.keras.layers import Dense
-
-
-class FixedDense(Dense):
-    def __init__(self, *args, quantization_config=None, **kwargs):
-        super().__init__(*args, **kwargs)
-
 
 try:
-    model = load_model("plant_disease_model.keras", custom_objects={"Dense": FixedDense})
-except Exception:
-    model = load_model("plant_disease_model.keras")
+    import tflite_runtime.interpreter as tflite
+except ImportError:
+    try:
+        import tensorflow.lite as tflite
+    except ImportError:
+        tflite = None
+
+TFLITE_MODEL_PATH = "plant_disease_model.tflite"
+
+_interpreter = None
+_input_details = None
+_output_details = None
+
+
+def get_tflite_interpreter():
+    global _interpreter, _input_details, _output_details
+    if _interpreter is None and os.path.exists(TFLITE_MODEL_PATH) and tflite is not None:
+        _interpreter = tflite.Interpreter(model_path=TFLITE_MODEL_PATH)
+        _interpreter.allocate_tensors()
+        _input_details = _interpreter.get_input_details()
+        _output_details = _interpreter.get_output_details()
+    return _interpreter, _input_details, _output_details
 
 
 with open("labels.txt", "r") as f:
@@ -71,29 +80,30 @@ def is_leaf_image(image_path, min_leaf_ratio=0.12):
 
 
 def predict_disease(image_path):
-
     is_leaf, error_msg = is_leaf_image(image_path)
     if not is_leaf:
         return {
             "error": error_msg
         }
 
-    # Load image
-    img = load_img(
-        image_path,
-        target_size=(224, 224)
-    )
+    # Load and preprocess image using pure PIL & Numpy
+    img = Image.open(image_path).convert('RGB').resize((224, 224))
+    img_array = np.array(img, dtype=np.float32) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
 
-    img = img_to_array(img)
+    interpreter, input_details, output_details = get_tflite_interpreter()
 
-    img = np.expand_dims(img, axis=0)
-
-    img = img / 255.0
-
-    prediction = model.predict(img, verbose=0)
+    if interpreter is not None:
+        interpreter.set_tensor(input_details[0]['index'], img_array)
+        interpreter.invoke()
+        prediction = interpreter.get_tensor(output_details[0]['index'])
+    else:
+        # Fallback to Keras model if TFLite model is not loaded
+        import tensorflow as tf
+        model = tf.keras.models.load_model("plant_disease_model.keras")
+        prediction = model.predict(img_array, verbose=0)
 
     predicted_index = np.argmax(prediction)
-
     confidence = float(np.max(prediction)) * 100
 
     if confidence < 40.0:
@@ -106,4 +116,4 @@ def predict_disease(image_path):
     return {
         "disease": disease,
         "confidence": round(confidence, 2)
-    }
+    }
