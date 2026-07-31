@@ -5,15 +5,12 @@ import numpy as np
 from PIL import Image
 
 try:
-    import ai_edge_litert.interpreter as tflite
+    import tflite_runtime.interpreter as tflite
 except ImportError:
     try:
-        import tflite_runtime.interpreter as tflite
+        import tensorflow.lite as tflite
     except ImportError:
-        try:
-            import tensorflow.lite as tflite
-        except ImportError:
-            tflite = None
+        tflite = None
 
 TFLITE_MODEL_PATH = "plant_disease_model.tflite"
 

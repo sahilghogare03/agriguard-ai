@@ -43,7 +43,11 @@ venv.bak/
 static/uploads/*
 !static/uploads/.gitkeep
 plant_disease_model.keras
+temp_saved_model_onnx/
+temp_saved_model/
 convert_model.py
+convert_onnx.py
+convert_tflite_to_onnx.py
 render.yaml
 static/users.json
 static/history.json
