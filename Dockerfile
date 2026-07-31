@@ -4,7 +4,7 @@ FROM python:3.10-slim
 # Prevent Python from writing .pyc files and enable unbuffered logging
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8080
+    PORT=7860
 
 # Install system dependencies required by OpenCV and runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -22,9 +22,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files (including plant_disease_model.keras, labels.txt, templates, static, etc.)
 COPY . .
 
-# Expose port 8080 for Cloud Run
-EXPOSE 8080
+# Expose default port (7860 for Hugging Face Spaces / 8080 for Cloud Run)
+EXPOSE 7860 8080
 
-# Start Gunicorn server configured for Cloud Run ($PORT)
+# Start Gunicorn server configured for container port ($PORT)
 # Note: Using 1 worker with multiple threads to optimize TensorFlow model memory usage
 CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120 app:app
