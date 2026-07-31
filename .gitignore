@@ -39,6 +39,11 @@ venv.bak/
 *.swp
 *.swo
 
-# App uploads
+# App uploads & temporary files
 static/uploads/*
 !static/uploads/.gitkeep
+plant_disease_model.keras
+convert_model.py
+render.yaml
+static/users.json
+static/history.json
