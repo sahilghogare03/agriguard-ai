@@ -5,28 +5,20 @@ import numpy as np
 from PIL import Image
 
 try:
-    import tflite_runtime.interpreter as tflite
+    import onnxruntime as ort
 except ImportError:
-    try:
-        import tensorflow.lite as tflite
-    except ImportError:
-        tflite = None
+    ort = None
 
-TFLITE_MODEL_PATH = "plant_disease_model.tflite"
+ONNX_MODEL_PATH = "plant_disease_model.onnx"
 
-_interpreter = None
-_input_details = None
-_output_details = None
+_ort_session = None
 
 
-def get_tflite_interpreter():
-    global _interpreter, _input_details, _output_details
-    if _interpreter is None and os.path.exists(TFLITE_MODEL_PATH) and tflite is not None:
-        _interpreter = tflite.Interpreter(model_path=TFLITE_MODEL_PATH)
-        _interpreter.allocate_tensors()
-        _input_details = _interpreter.get_input_details()
-        _output_details = _interpreter.get_output_details()
-    return _interpreter, _input_details, _output_details
+def get_onnx_session():
+    global _ort_session
+    if _ort_session is None and os.path.exists(ONNX_MODEL_PATH) and ort is not None:
+        _ort_session = ort.InferenceSession(ONNX_MODEL_PATH)
+    return _ort_session
 
 
 with open("labels.txt", "r") as f:
@@ -91,14 +83,14 @@ def predict_disease(image_path):
     img_array = np.array(img, dtype=np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-    interpreter, input_details, output_details = get_tflite_interpreter()
+    session = get_onnx_session()
 
-    if interpreter is not None:
-        interpreter.set_tensor(input_details[0]['index'], img_array)
-        interpreter.invoke()
-        prediction = interpreter.get_tensor(output_details[0]['index'])
+    if session is not None:
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        prediction = session.run([output_name], {input_name: img_array})[0]
     else:
-        # Fallback to Keras model if TFLite model is not loaded
+        # Fallback to Keras model if ONNX model is not loaded
         import tensorflow as tf
         model = tf.keras.models.load_model("plant_disease_model.keras")
         prediction = model.predict(img_array, verbose=0)
