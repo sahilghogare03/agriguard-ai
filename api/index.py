@@ -1,17 +1,16 @@
-from app import app
+import os
+from app import app as flask_app
 
-def handler(environ, start_response):
-    # Retrieve true request URL path
-    path = environ.get('HTTP_X_FORWARDED_PATH', environ.get('PATH_INFO', '/'))
+def app(environ, start_response):
+    # Get true path requested by client from Vercel headers
+    raw_path = environ.get('HTTP_X_FORWARDED_PATH', '') or environ.get('PATH_INFO', '/')
     
-    # Strip serverless rewrite path prefix if present
-    if path.startswith('/api/index.py'):
-        path = path[13:] or '/'
-    elif path.startswith('/api/index'):
-        path = path[10:] or '/'
+    # Remove vercel rewrite destination prefix if present
+    if raw_path.startswith('/api/index.py'):
+        raw_path = raw_path[13:] or '/'
+    elif raw_path.startswith('/api/index'):
+        raw_path = raw_path[10:] or '/'
 
-    environ['PATH_INFO'] = path
-    return app(environ, start_response)
-
-# Export handler as app for Vercel WSGI
-app = handler
+    environ['PATH_INFO'] = raw_path
+    environ['SCRIPT_NAME'] = ''
+    return flask_app(environ, start_response)

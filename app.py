@@ -58,8 +58,6 @@ def is_admin_user(user):
 
 @app.route("/")
 def home():
-    if "user" not in session:
-        return redirect(url_for("login_page"))
     return render_template("index.html")
 
 
