@@ -19,10 +19,16 @@ from supabase_client import (
     SUPABASE_URL
 )
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
+)
 app.secret_key = os.getenv("SECRET_KEY", "agriguard_secret_key_2026_safe")
 
-UPLOAD_FOLDER = "static/uploads"
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -57,6 +63,8 @@ def is_admin_user(user):
 # ---------------------------------------------------------
 
 @app.route("/")
+@app.route("/api/index")
+@app.route("/api/index.py")
 def home():
     return render_template("index.html")
 
